@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>scibble.md</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prismjs/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.2.12/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prismjs/1.29.0/prism.min.js"></script>
+    <style>
+        /* Previous styles remain the same */
+        body { 
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark {
+            color-scheme: dark;
+        }
+        .preview img { max-width: 100%; }
+        .transition-all { transition: all 0.3s ease-in-out; }
+        .sidebar-note:hover { transform: translateX(4px); }
+        
+        .theme-light {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --accent: #2563eb;
+        }
+
+        /* Markdown Preview Styles */
+        .preview h1 { font-size: 2em; font-weight: 600; margin-bottom: 0.5em; }
+        .preview h2 { font-size: 1.5em; font-weight: 600; margin-bottom: 0.5em; }
+        .preview h3 { font-size: 1.25em; font-weight: 600; margin-bottom: 0.5em; }
+        .preview p { margin-bottom: 1em; line-height: 1.6; }
+        .preview ul, .preview ol { margin-bottom: 1em; padding-left: 2em; }
+        .preview li { margin-bottom: 0.5em; }
+        .preview code { padding: 0.2em 0.4em; border-radius: 0.25em; }
+        .preview pre { padding: 1em; border-radius: 0.5em; margin-bottom: 1em; }
+        .preview blockquote { border-left: 4px solid var(--accent); padding-left: 1em; margin-bottom: 1em; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-secondary);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="theme-light">
+    <!-- Initial Preferences Modal -->
+    <div id="preferencesModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl max-w-md w-full fade-in">
+            <h2 class="text-2xl font-bold mb-6">Welcome to scribble.md! 📝</h2>
+            <div class="space-y-6">
+                <p>A Markdown Note Taker!</p>
+                <p>Here are some shortcuts!</p>
+                <ul>
+                    <p>Bold Text (Ctrl + B)</p>
+                    <p>Italic Text (Ctrl + I)</p>
+                </ul>
+                <button onclick="savePreferences()" class="w-full bg-gray-900 text-white py-2 rounded-lg hover:bg-black transition-colors">
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div class="hidden" id="mainApp">
+        <!-- Header -->
+        <header class="border-b border-gray-200 dark:border-gray-700">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <h1 class="text-2xl font-bold">scribble.md</h1>
+                <div class="flex items-center space-x-4">
+                    <button onclick="createNewNote()" class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-black transition-colors">
+                        New Note
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="container mx-auto px-4 py-6">
+            <div class="grid grid-cols-4 gap-6">
+                <!-- Sidebar -->
+                <div class="col-span-1 space-y-4">
+                    <div class="sticky top-4">
+                        <input type="text" 
+                               placeholder="Search notes..." 
+                               class="w-full p-2 border border-gray-200 dark:border-gray-700 rounded-lg mb-4 bg-transparent"
+                               onkeyup="searchNotes(this.value)">
+                        <div id="notesList" class="space-y-2 max-h-[calc(100vh-12rem)] overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <!-- Editor -->
+                <div class="col-span-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+                    <div class="flex justify-end p-2 border-b border-gray-200 dark:border-gray-700">
+                        <button 
+                            onclick="deleteNote()" 
+                            class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            id="deleteButton"
+                            style="display: none;">
+                            Delete Note
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 h-[calc(100vh-14rem)]">
+                        <div class="p-6 border-r border-gray-200 dark:border-gray-700">
+                            <textarea 
+                                id="editor" 
+                                class="w-full h-full resize-none focus:outline-none bg-transparent"
+                                placeholder="Write your markdown here..."
+                            ></textarea>
+                        </div>
+                        <div class="preview p-6 overflow-y-auto" id="preview"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -15,4 +15,4 @@
 
 ## Try it out!
 
-- [scribble.md](https://github.io/divpreeet/scribbleMD)
+- [scribble.md](https://divpreeet.github.io/scribbleMD/)
